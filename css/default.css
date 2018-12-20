@@ -62,6 +62,7 @@ pre code {
     margin-bottom: 20px;
 }
 
+.page,
 .post {
     background-color: #ffffff;
     max-width: 800px;
