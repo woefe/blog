@@ -101,18 +101,16 @@ pre code {
     padding: 10px;
     margin-top: 15px;
     box-shadow: 0px 4px 6px #ababab;
-    text-align: justify;
     border-radius: 4px;
 }
 
-.post_header {
-    color: #a2a2a2;
+.post_header, .date_box {
+    color: #6c6c6c;
     font-style: italic;
 }
 
 .date_box {
     text-align: end;
-    color: #a2a2a2;
 }
 
 footer {
@@ -125,9 +123,10 @@ footer {
     margin-right: auto;
     margin-top: 2em;
     margin-bottom: 1em;
-    color: #7a7a7a;
+    color: #696969;
 }
 
 footer hr {
     width: 70%;
+    color: #696969;
 }
