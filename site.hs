@@ -36,7 +36,7 @@ main = hakyll $ do
             posts <- recentFirst =<< loadAll "posts/*"
             let archiveCtx =
                     listField "posts" postCtx (return posts) <>
-                    constField "title" "Archives"            <>
+                    constField "title" "Archive"            <>
                     defaultContext
 
             makeItem ""
