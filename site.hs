@@ -34,8 +34,8 @@ main = hakyll $ do
         compile $ do
             posts <- recentFirst =<< loadAll "posts/*"
             let archiveCtx =
-                    listField "posts" postCtx (return posts) `mappend`
-                    constField "title" "Archives"            `mappend`
+                    listField "posts" postCtx (return posts) <>
+                    constField "title" "Archives"            <>
                     defaultContext
 
             makeItem ""
@@ -49,17 +49,19 @@ main = hakyll $ do
         compile $ do
             posts <- fmap (take 10) . recentFirst =<< loadAll "posts/*"
             let indexCtx =
-                    listField "posts" postCtx (return posts) `mappend`
+                    listField "posts" postCtx (return posts) <>
+                    constField "is_index" "true"             <>
                     defaultContext
 
             makeItem ""
-                >>= loadAndApplyTemplate "templates/index.html" indexCtx
+                >>= loadAndApplyTemplate "templates/teaser-post-list.html" indexCtx
+                >>= loadAndApplyTemplate "templates/default.html" indexCtx
                 >>= relativizeUrls
 
     create ["atom.xml"] $ do
         route idRoute
         compile $ do
-            let feedCtx = postCtx `mappend` bodyField "description"
+            let feedCtx = postCtx <> bodyField "description"
 
             posts <- fmap (take 10) . recentFirst =<< loadAllSnapshots "posts/*" "content"
             renderAtom myFeedConfiguration feedCtx posts
@@ -70,9 +72,9 @@ main = hakyll $ do
 --------------------------------------------------------------------------------
 postCtx :: Context String
 postCtx =
-    dateField "date" "%B %e, %Y" `mappend`
-    teaserField "teaser" "content" `mappend`
-    snapshotField "content" "content" `mappend`
+    dateField "date" "%B %e, %Y" <>
+    teaserField "teaser" "content" <>
+    snapshotField "content" "content" <>
     defaultContext
 
 snapshotField :: String -> Snapshot -> Context String
