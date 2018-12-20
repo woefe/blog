@@ -1,0 +1,14 @@
+$for(posts)$
+    <article class="post">
+        <h1><a href="$url$">$title$</a></h1>
+        $if(teaser)$
+            <p>$teaser$</p>
+            <a href="$url$">Read more</a>
+        $else$
+            $content$
+        $endif$
+        <div class="date_box">
+            $date$
+        </div>
+    </article>
+$endfor$
