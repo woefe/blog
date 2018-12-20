@@ -2,7 +2,7 @@
 title: About
 ---
 
-This is my blog
+This is my blog. It is powered by [Hakyll](https://jaspervdj.be/hakyll). The source code is available on [github](https://github.com/woefe/blog).
 
 ## License
 
