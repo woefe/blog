@@ -57,7 +57,6 @@ tr:hover {
 
 code {
     background-color: #f5f5f5;
-    border-radius: 4px;
     box-sizing: border-box;
     color: #3b3b3b;
     font-family: Noto Sans Mono, monospace;
@@ -69,7 +68,6 @@ pre {
     display: block;
     overflow-x: auto;
     border: 1px solid #b0b0b0;;
-    border-radius: 4px;
     padding: 10px;
     margin-left: 10px;
     margin-right: 10px;
@@ -98,7 +96,6 @@ pre code {
     padding: 10px;
     margin-top: 15px;
     box-shadow: 0px 4px 6px #ababab;
-    border-radius: 4px;
 }
 
 .post_header, .date_box {
