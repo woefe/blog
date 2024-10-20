@@ -4,7 +4,7 @@ import           Hakyll
 
 ----------------------------------------------------------------------------------------------------
 main :: IO ()
-main = hakyll $ do
+main = hakyllWith config $ do
     match "images/*" $ do
         route idRoute
         compile copyFileCompiler
@@ -91,3 +91,6 @@ myFeedConfiguration = FeedConfiguration
     , feedAuthorEmail = ""
     , feedRoot        = "https://blog.woefe.com"
     }
+
+config :: Configuration
+config = defaultConfiguration { destinationDirectory = "docs" }
