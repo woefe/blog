@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Woefe's Blog
+            
+            
+        </title>
+        <link rel="icon" type="image/png" href="./images/favicon.png">
+        <link rel="stylesheet" href="./css/default.css" />
+        <link rel="stylesheet" href="./css/syntax.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="./">Woefe's Blog</a>
+            </div>
+        </header>
+
+        <main>
+            
+    <article class="post">
+        <h1><a href="./posts/bootstrap_zsh.html">How to bootstrap your Zsh config with zplug</a></h1>
+        
+            <p><p>Recently, I spent some (probably too much) time tweaking my <a href="https://en.wikipedia.org/wiki/Z_shell">Zsh</a> configuration.
+The results of my efforts are the three Zsh plugins <a href="https://github.com/woefe/wbase.zsh">wbase.zsh</a>, <a href="https://github.com/woefe/git-prompt.zsh">git-prompt.zsh</a>, <a href="https://github.com/woefe/vi-mode.zsh">vi-mode.zsh</a> that are now available for anyone.
+In this post I will explain how you can use the plugin manager <a href="https://github.com/zplug/zplug">zplug</a> together with my plugins to bootstrap your own config.
+One note before we start: for the best experience, check that your terminal supports 256 colors or more.
+You can do that with the <code>tput colors</code> command.</p>
+</p>
+            <a href="./posts/bootstrap_zsh.html">Go to full article</a>
+        
+        <div class="date_box">
+            July 22, 2019
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/faster_scapy.html">Speeding up Scapy</a></h1>
+        
+            <p><p>A few weeks ago I revisited the DNS cache poisoning attack discovered by Dan Kaminsky in 2008.
+Implementing the attack requires some fairly low-level manipulation of DNS packets.
+Fortunately, we have <a href="https://scapy.net/">Scapy</a>, which makes packet manipulation easy and accessible from Python.
+But at first the performance of my script was so bad that I could not carry out the attack (maybe I just never waited long enough).
+In this post I want to record my journey that led to a faster and faster Scapy script.</p>
+</p>
+            <a href="./posts/faster_scapy.html">Go to full article</a>
+        
+        <div class="date_box">
+            March 22, 2019
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/ddc_screen_brightness.html">Control brightness of external monitors on Linux</a></h1>
+        
+            <p><p>Until now I only knew the convenient feature from my laptop, where I can simply press a hotkey to adjust the brightness of the built in screen.
+But what about external monitors?
+Can I adjust the brightness without fiddling with the on-screen menu?</p>
+</p>
+            <a href="./posts/ddc_screen_brightness.html">Go to full article</a>
+        
+        <div class="date_box">
+            October  9, 2018
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/termite.html">Install Termite's terminfo</a></h1>
+        
+            <p><p>On many systems Termite’s terminfo is not available by default. That’s a problem since you cannot start ncurses apps,
+when the terminfo is missing. I usually run into this problem when I try to ssh into a newly installed machine. Here is
+a one-liner to fix the issue (you have to run this command on the remote, not you local machine!).</p>
+</p>
+            <a href="./posts/termite.html">Go to full article</a>
+        
+        <div class="date_box">
+            November  4, 2017
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/rofi_themes.html">Convert legacy Rofi themes</a></h1>
+        
+            <p><p><a href="https://github.com/DaveDavenport/rofi">Rofi</a> is a window switcher, application launcher and dmenu replacement, which
+integrates nicely with tiling window managers. In versions 1.3.x and before themes were read from <a href="https://wiki.archlinux.org/index.php/X_resources">X
+resources</a>. The recent upgrade to version 1.4.2 broke my custom
+<a href="https://github.com/horst3180/Arc-theme">Arc-Dark</a> inspired theme. Here is how to migrate legacy themes to the new
+format:</p>
+<pre class="shell"><code>rofi -config /path/to/old/themefile -dump-theme &gt; theme.rasi</code></pre>
+</p>
+            <a href="./posts/rofi_themes.html">Go to full article</a>
+        
+        <div class="date_box">
+            October 24, 2017
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/pacman_cache.html">Don't forget to clean your pacman cache!</a></h1>
+        
+            <p><p>Arch Linux’ package manager <strong>pacman</strong> stores all downloaded packages in <code>/var/cache/pacman/pkg</code>.
+This cache does not get cleaned automatically and pacman keeps adding new archives with every single system update.
+If you forget about the pacman cache for a couple of months it takes up more and more space.
+I recently freed over 12GB on my SSD by running the cleanup commands listed below.</p>
+</p>
+            <a href="./posts/pacman_cache.html">Go to full article</a>
+        
+        <div class="date_box">
+            March 26, 2017
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/tinc_vpn.html">VPN with tinc</a></h1>
+        
+            <p><p>I finally solved the problem that I could not access my home computer, when I am not at home. In many cases the easiest
+solution is to forward a port on the home router and run a SSH daemon on the home computer. However, it is not possible
+for me to forward ports to the public internet. I got around this issue by setting up a Virtual Private Network (VPN)
+using the <a href="https://tinc-vpn.org">tinc</a> VPN daemon. tinc is one of <a href="http://tinc-vpn.org/vpnlinks/">many</a> VPN solutions
+available on GNU/Linux. It is simple and easy to set up, especially when comparing it to OpenVPN, which has an enormous
+amount of features and configuration options.</p>
+</p>
+            <a href="./posts/tinc_vpn.html">Go to full article</a>
+        
+        <div class="date_box">
+            September 14, 2016
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/owncloud_bookmarks.html">Bookmarks with ownCloud and Vimperator</a></h1>
+        
+            <p><p>I recently added the Bookmarks app to my ownCloud installation. This app keeps a simple list of bookmarks synced across
+my computers. The Bookmarks app provides a <a href="https://en.wikipedia.org/wiki/Bookmarklet">bookmarklet</a> to add new bookmarks
+easily. But there is a problem with using the bookmarklet: I have to click on it! And therefore I have to display the
+bookmarks bar or search for the bookmarklet in the bookmarks menu. I don’t like both approaches for following reasons:
+The bookmark bar eats too much space on my small notebook screen and searching for the bookmarklet in the menu takes too
+long.</p>
+</p>
+            <a href="./posts/owncloud_bookmarks.html">Go to full article</a>
+        
+        <div class="date_box">
+            May 23, 2016
+        </div>
+    </article>
+
+    <article class="post">
+        <h1><a href="./posts/under_construction.html">Under Construction</a></h1>
+        
+            <p>Hi there, you found my blog 😀 . It is still under heavy construction. See you soon!</p>
+        
+        <div class="date_box">
+            May 22, 2016
+        </div>
+    </article>
+
+
+        </main>
+
+        <footer>
+    <nav>
+        <a href="./">Home</a>
+        ·
+        <a href="./about.html">About</a>
+        ·
+        <a href="./contact.html">Contact</a>
+        ·
+        <a href="./archive.html">Archive</a>
+        ·
+        <a href="./atom.xml">Feed</a>
+    </nav>
+    <hr>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+</footer>
+
+    </body>
+</html>

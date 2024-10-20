@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Woefe's Blog
+            
+                - VPN with tinc
+            
+        </title>
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+        <link rel="stylesheet" href="../css/default.css" />
+        <link rel="stylesheet" href="../css/syntax.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">Woefe's Blog</a>
+            </div>
+        </header>
+
+        <main>
+            <article class="post">
+    <h1 class="post_title">VPN with tinc</h1>
+    <section class="post_header">
+        Posted on September 14, 2016
+        
+    </section>
+    <section>
+        <p>I finally solved the problem that I could not access my home computer, when I am not at home. In many cases the easiest
+solution is to forward a port on the home router and run a SSH daemon on the home computer. However, it is not possible
+for me to forward ports to the public internet. I got around this issue by setting up a Virtual Private Network (VPN)
+using the <a href="https://tinc-vpn.org">tinc</a> VPN daemon. tinc is one of <a href="http://tinc-vpn.org/vpnlinks/">many</a> VPN solutions
+available on GNU/Linux. It is simple and easy to set up, especially when comparing it to OpenVPN, which has an enormous
+amount of features and configuration options.</p>
+<!--more-->
+<h1 id="the-setup">The setup</h1>
+<p>My VPN network consists of four different computers, which are all running Arch Linux: a Virtual Private Server (VPS)
+that has a static IP address and is accessible from the public Internet, a laptop, the home computer (Desktop) and in
+the same LAN a Raspberry Pi. I use the Raspberry Pi to wake up the home computer via Wake on LAN (WoL). This allows me
+to shutdown the home computer when I leave my home and to start it only when I actually need it. On initial connection,
+the Laptop, Desktop and Raspberry connect to the VPS. But due to tinc’s <strong>automatic full mesh routing</strong> feature the
+traffic is later sent directly to the destination computer, which usually leads to better and faster connections between
+the computers in the VPN.</p>
+<p><img src="../images/tinc_vpn_setup.svg" alt="Drawing" style="width: 60%;" /></p>
+<h1 id="configuring-tinc">Configuring tinc</h1>
+<p>The following steps will quide you through the configuration process for setting up a tinc VPN called <strong>thevpn</strong> that
+uses the 10.42.42.0/24 subnet. If you want to choose a different name, replace all occurrences of <strong>thevpn</strong> with
+the name you like. Also replace the angle brackets and the text within them with the values shown in the following
+table.</p>
+<!-- TODO: two step configuration -->
+<table>
+<thead>
+<tr class="header">
+<th>host</th>
+<th>hostname</th>
+<th>ip</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>VPS</td>
+<td>vps</td>
+<td>10.42.42.1</td>
+</tr>
+<tr class="even">
+<td>Laptop</td>
+<td>laptop</td>
+<td>10.42.42.2</td>
+</tr>
+<tr class="odd">
+<td>Desktop</td>
+<td>desktop</td>
+<td>10.42.42.3</td>
+</tr>
+<tr class="even">
+<td>Raspberry Pi</td>
+<td>raspberry</td>
+<td>10.42.42.4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="per-host-configuration">Per host configuration</h2>
+<p>Install the tinc daemon</p>
+<pre><code>pacman -S tinc</code></pre>
+<p>Create the configuration directory structure</p>
+<pre><code>mkdir -p /etc/tinc/thevpn/hosts</code></pre>
+<p>Edit <code>/etc/tinc/thevpn/tinc.conf</code>. On VPS the config looks like this:</p>
+<pre><code>Name = vps
+Device = /dev/net/tun</code></pre>
+<p>on all other three computers the config looks like this:</p>
+<pre><code>Name = &lt;hostname&gt;
+Device = /dev/net/tun
+ConnectTo = vps</code></pre>
+<p>Edit the start script <code>/etc/tinc/thevpn/tinc-up</code></p>
+<pre class="shell"><code>#!/bin/sh
+ip link set $INTERFACE up
+ip addr add  &lt;ip&gt;/32 dev $INTERFACE
+ip route add 10.42.42.0/24 dev $INTERFACE</code></pre>
+<p>Edit the stop script <code>/etc/tinc/thevpn/tinc-down</code></p>
+<pre class="shell"><code>#!/bin/sh
+ip route del 10.42.42.0/24 dev $INTERFACE
+ip addr del &lt;ip&gt;/32 dev $INTERFACE
+ip link set $INTERFACE down</code></pre>
+<p>Make the scripts executable</p>
+<pre><code>chmod +x /etc/tinc/thevpn/tinc-up
+chmod +x /etc/tinc/thevpn/tinc-down</code></pre>
+<p>Create the host file <code>/etc/tinc/thevpn/hosts/&lt;hostname&gt;</code>. On VPS the config looks like this:</p>
+<pre><code>Address = &lt;static ip of vps&gt;
+Port = 655
+Subnet = 10.42.42.1/32</code></pre>
+<p>on all other three computers the config looks like this:</p>
+<pre><code>Port = 655
+Subnet = &lt;ip&gt;/32</code></pre>
+<p>Create a keypair (keep the default values, when this command asks you where to save the keys)</p>
+<pre><code>tincd -n thevpn -K 4096</code></pre>
+<p>Repeat all these steps on all four machines.</p>
+<h2 id="synchronize-host-files-and-start-tincd">Synchronize host files and start tincd</h2>
+<p>Before starting the tinc daemon, the host configuration files have to be synchronized across all four computers. The
+<code>/etc/tinc/thevpn/hosts</code> directory on every host should contain four host configuration files, that are identical across
+the four hosts. After the host configuration files are copied to all machines, the tinc daemon can be started, first on
+VPS and then on all other computers in the VPN Network. The tinc daemon can be enabled and started via systemd:</p>
+<pre><code>systemctl enable tinc@thevpn.service
+systemctl start tinc@thevpn.service</code></pre>
+<p>I recommend, you first start the tinc daemon manually before starting it via systemd to ensure that everything is set up
+correctly. The troubleshooting section describes how to start tinc manually.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p>A few hints that might help fixing issues you encounter:</p>
+<ul>
+<li>Use <code>tincd -n thevpn -d3 -D</code> to start tinc manually with debugging output and look up the errors
+<a href="https://www.tinc-vpn.org/documentation/Error-messages.html">here</a>. Note that by pressing Ctrl+C the debug level is
+increased to 5, i.e. you cannot kill tincd by pressing Ctrl+C. Use Ctrl+Z and <code>kill %1</code> instead.</li>
+<li>Check that the correct IP addresses and subnet masks are used, especially the <code>/32</code> masks</li>
+<li>Chapter 5 of the tinc <a href="https://www.tinc-vpn.org/documentation/tinc.pdf">manual</a></li>
+</ul>
+<h1 id="wake-on-lan">Wake On Lan</h1>
+<p>Picture following scenario: You are travelling and working on your laptop. You want to access files on your home
+desktop, but it is shut down. Luckily, the Raspberry Pi is running. You can establish a ssh connection to the Raspberry
+and start the desktop computer from the Raspberry via WoL. You can use the following script to remotely start and stop
+the desktop computer. The shell script takes one argument (<code>start</code> or <code>stop</code>).</p>
+<pre class="shell"><code>#!/bin/sh
+if [ &quot;$1&quot; == &quot;start&quot; ]; then
+    ssh 10.42.42.4 &quot;wol -h desktop &lt;desktop_mac_address&gt;&quot;
+elif [ &quot;$1&quot; == &quot;stop&quot; ]; then
+    ssh 10.42.42.3 -t &quot;sudo /usr/bin/systemctl poweroff&quot;
+fi</code></pre>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+    <nav>
+        <a href="../">Home</a>
+        ·
+        <a href="../about.html">About</a>
+        ·
+        <a href="../contact.html">Contact</a>
+        ·
+        <a href="../archive.html">Archive</a>
+        ·
+        <a href="../atom.xml">Feed</a>
+    </nav>
+    <hr>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+</footer>
+
+    </body>
+</html>

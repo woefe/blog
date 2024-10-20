@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Woefe's Blog
+            
+                - Control brightness of external monitors on Linux
+            
+        </title>
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+        <link rel="stylesheet" href="../css/default.css" />
+        <link rel="stylesheet" href="../css/syntax.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">Woefe's Blog</a>
+            </div>
+        </header>
+
+        <main>
+            <article class="post">
+    <h1 class="post_title">Control brightness of external monitors on Linux</h1>
+    <section class="post_header">
+        Posted on October  9, 2018
+        
+    </section>
+    <section>
+        <p>Until now I only knew the convenient feature from my laptop, where I can simply press a hotkey to adjust the brightness of the built in screen.
+But what about external monitors?
+Can I adjust the brightness without fiddling with the on-screen menu?</p>
+<!--more-->
+<p>Turns out I can, and the secret sauce I need is called <a href="https://en.wikipedia.org/wiki/Display_Data_Channel">Display Data Channel (DDC)</a>.</p>
+<h1 id="the-hardware">The hardware</h1>
+<p>Whether DDC works properly depends on many different variables like the monitor, display connection, GPU,…
+Here is the list of hardware that worked for me:</p>
+<ol type="1">
+<li>Desktop:
+<ul>
+<li>GPU: Nvidia GTX 1070 (with proprietary driver)</li>
+<li>Monitor 1: Dell U2715H</li>
+<li>Monitor 2: Dell U2414H</li>
+<li>Both monitors are connected via DisplayPort (HDMI did not work)</li>
+</ul></li>
+<li>Laptop:
+<ul>
+<li>Dell XPS 13 9370</li>
+<li>Anker USB-C to HDMI Adapter (Model A8306)</li>
+<li>No-name USB-C hub with HDMI (couldn’t find a modelnumber; Uses a VIA chip according to <code>dmesg</code>)</li>
+<li>Monitor 1: Dell U2715H</li>
+<li>Monitor 2: Dell U2414H</li>
+<li>All monitors connected via HDMI</li>
+</ul></li>
+</ol>
+<p>Of course, DDC has to be enabled in the on-screen menu of the monitor (“Others” -&gt; “DDC/CI” on my Dells).</p>
+<h1 id="the-software">The software</h1>
+<p>The tool you need is <a href="https://www.ddcutil.com/">ddcutil</a>.
+It is available in the Ubuntu repositories and on Arch Linux via the AUR.
+On Arch Linux I had to make a few adjustments to get it working:</p>
+<ol type="1">
+<li>Load the <code>i2c-dev</code> kernel module with <code>modprobe i2c-dev</code>.
+To make this change persistent across reboots:
+<code>echo i2c_dev &gt;&gt; /etc/modules-load.d/ddc.conf</code></li>
+<li>Create group <code>i2c</code>:
+<code>groupadd i2c</code></li>
+<li>Create udev rules to allow group <code>i2c</code> read and write access to <code>/dev/i2c-*</code>:
+<code>cp /usr/share/ddcutil/data/45-ddcutil-i2c.rules /etc/udev/rules.d/</code></li>
+<li>Add your user to the <code>i2c</code> group:
+<code>usermod $USER -aG i2c</code></li>
+</ol>
+<p>After a reboot <code>ddcutil detect</code> should detect the monitors. If it does not, check the <a href="https://www.ddcutil.com/config/">documentation</a>.
+Some devices need special tweaking, e.g. the <a href="https://www.ddcutil.com/raspberry/">Raspberry Pi</a>.
+One more tip: The output of <code>ddcutil environment</code> suggests that it is not necessary to load <code>i2c-dev</code> when using proprietary Nvidia drivers.
+However, without <code>i2c-dev</code> (and with <a href="ddcutil%20environment">special Nvidia driver settings</a>) ddcutil could not detect any monitors.</p>
+<h1 id="examples">Examples</h1>
+<p>Settings like color corrections, orientation of the on-screen menu and the input source can be adjusted through DDC.
+<code>ddcutil capabilities</code> shows a list of supported options.
+The following examples adjust and read the brightness of the monitor:</p>
+<ul>
+<li>Get the brightness of the first display: <code>ddcutil getvcp 10 --display 1</code></li>
+<li>Set the brightness of the second display to 100%: <code>ddcutil setvcp 10 100 --display 2</code></li>
+<li>Decrease the brightness of the second display by 5%: <code>ddcutil setvcp 10 - 5 --display 2</code></li>
+<li>Increase the brightness of the first display by 5%: <code>ddcutil setvcp 10 + 5 --display 1</code></li>
+</ul>
+<p>I mapped <a href="https://github.com/woefe/dotfiles/blob/a8882e631eb84992d93610168bf4ec3d3f005556/i3/.config/i3/config#L178">these</a> commands to some hotkeys in my i3 config.</p>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+    <nav>
+        <a href="../">Home</a>
+        ·
+        <a href="../about.html">About</a>
+        ·
+        <a href="../contact.html">Contact</a>
+        ·
+        <a href="../archive.html">Archive</a>
+        ·
+        <a href="../atom.xml">Feed</a>
+    </nav>
+    <hr>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+</footer>
+
+    </body>
+</html>

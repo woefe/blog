@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Woefe's Blog</title>
+    <link href="https://blog.woefe.com/atom.xml" rel="self" />
+    <link href="https://blog.woefe.com" />
+    <id>https://blog.woefe.com/atom.xml</id>
+    <author>
+        <name>woefe</name>
+        
+    </author>
+    <updated>2019-07-22T00:00:00Z</updated>
+    <entry>
+    <title>How to bootstrap your Zsh config with zplug</title>
+    <link href="https://blog.woefe.com/posts/bootstrap_zsh.html" />
+    <id>https://blog.woefe.com/posts/bootstrap_zsh.html</id>
+    <published>2019-07-22T00:00:00Z</published>
+    <updated>2019-07-22T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>Recently, I spent some (probably too much) time tweaking my <a href="https://en.wikipedia.org/wiki/Z_shell">Zsh</a> configuration.
+The results of my efforts are the three Zsh plugins <a href="https://github.com/woefe/wbase.zsh">wbase.zsh</a>, <a href="https://github.com/woefe/git-prompt.zsh">git-prompt.zsh</a>, <a href="https://github.com/woefe/vi-mode.zsh">vi-mode.zsh</a> that are now available for anyone.
+In this post I will explain how you can use the plugin manager <a href="https://github.com/zplug/zplug">zplug</a> together with my plugins to bootstrap your own config.
+One note before we start: for the best experience, check that your terminal supports 256 colors or more.
+You can do that with the <code>tput colors</code> command.</p>
+<!--more-->
+<h1 id="why-not-oh-my-zsh-or-prezto">Why not Oh My Zsh or Prezto?</h1>
+<p>There are several ways to manage a Zsh configuration.
+The probably most popular approach is to use a configuration framework like <a href="https://github.com/robbyrussell/oh-my-zsh">Oh My Zsh</a> or <a href="https://github.com/sorin-ionescu/prezto">Prezto</a>.
+A configuration framework is a collection of themes and plugins that are carefully selected by developers to ensure good compatibility between plugins.
+And all included themes and plugins are pre-configured with settings that are suitable for a majority of users.</p>
+<p>Configuration frameworks are great and I can still recommend <a href="https://github.com/sorin-ionescu/prezto">Prezto</a> together with the powerlevel10k prompt.
+However, the frameworks interfere too much with my own ideas of how to configure my shell, and ultimately I decided that the frameworks are not for me.
+<a href="https://github.com/robbyrussell/oh-my-zsh">Oh My Zsh</a>, for example, is missing essential plugins like <a href="https://github.com/zsh-users/zsh-syntax-highlighting">zsh-syntax-highlighting</a> or <a href="https://github.com/zsh-users/zsh-autosuggestions">zsh-autosuggestions</a>.
+Of course, you could install plugins manually, but that defeats the purpose of a configuration framework, because you would now fiddle with your config manually.
+Prezto has a better selection of plugins, but I don’t like its <code>zstyle</code> configuration mechanism.
+It is cumbersome to discover which <code>zstlye</code> options are actually available.</p>
+<p>I think plugin managers are a better alternative to configuration frameworks.
+They can give you a similar user experience, but provide more flexibility.
+Next, we will look at the plugin manager <a href="https://github.com/zplug/zplug">zplug</a> and use it to build a new Zsh config.</p>
+<h1 id="installing-zplug">Installing zplug</h1>
+<p><a href="https://github.com/zplug/zplug">zplug</a> stands out among other plugin managers, because it handles not only plugins, but also binary releases from GitHub and more.
+It can also manage plugins from Oh My Zsh or Prezto.
+The full documentation of zplug and its installation procedure is available in the <a href="https://github.com/zplug/zplug">README.md</a> of the zplug repo, but here is a short rundown.</p>
+<ol type="1">
+<li><p>Install zplug with following Git command:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/zplug/zplug ~/.zplug</span></code></pre></div></li>
+<li><p>Add following template to your <code>.zshrc</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize plugins</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ~/.zplug/init.zsh</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Register your plugins here. E.g:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#zplug &quot;woefe/wbase.zsh&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#zplug &quot;zsh-users/zsh-completions&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#zplug &quot;zsh-users/zsh-autosuggestions&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> load</span></code></pre></div></li>
+<li><p>Restart your shell and execute <code>zplug install</code>. You need to run this command every time you add new plugins to your <code>.zshrc</code>.</p></li>
+<li><p>Optionally, execute <code>touch $ZPLUG_LOADFILE</code> to reduce the startup time of zplug.</p></li>
+</ol>
+<h1 id="a-complete-.zshrc">A complete .zshrc</h1>
+<p>At this point you should have a working zplug installation and be able to execute the <code>zplug</code> command.
+Now you probably ask yourself, “How exactly do I build my ultimate <code>.zshrc</code> with zplug, and where can I find more plugins?”
+The recipe for your ultimate <code>.zshrc</code> is below and a list of plugins is available at the <a href="https://github.com/unixorn/awesome-zsh-plugins">awesome-zsh-plugins</a> repo.
+Make a backup of your existing <code>.zshrc</code> and then replace it with following content, then restart your shell and execute <code>zplug install</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Aliases</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> la=<span class="st">&#39;ls -lah --color=auto&#39;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> lh=<span class="st">&#39;ls -lh --color=auto&#39;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> ls=<span class="st">&#39;ls --color=auto&#39;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> l=<span class="st">&#39;ls --color=auto&#39;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">alias</span> grep=<span class="st">&#39;grep --color=auto&#39;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Use the Emacs-like keybindings</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-e</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Keybindings for substring search plugin. Maps up and down arrows.</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">&#39;^[OA&#39;</span> history-substring-search-up</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">&#39;^[OB&#39;</span> history-substring-search-down</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">&#39;^[[A&#39;</span> history-substring-search-up</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="at">-M</span> main <span class="st">&#39;^[[B&#39;</span> history-substring-search-up</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Keybindings for autosuggestions plugin</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="st">&#39;^ &#39;</span> autosuggest-accept</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="ex">bindkey</span> <span class="st">&#39;^f&#39;</span> autosuggest-accept</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Gray color for autosuggestions</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="va">ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE</span><span class="op">=</span><span class="st">&#39;fg=247&#39;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># fzf settings. Uses sharkdp/fd for a faster alternative to `find`.</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="va">FZF_CTRL_T_COMMAND</span><span class="op">=</span><span class="st">&#39;fd --type f --hidden --exclude .git --exclude .cache&#39;</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="va">FZF_ALT_C_COMMAND</span><span class="op">=</span><span class="st">&#39;fd --type d --hidden --exclude .git&#39;</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Load plugins</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ~/.zplug/init.zsh</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;woefe/wbase.zsh&quot;</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;woefe/git-prompt.zsh&quot;</span>, use:<span class="st">&quot;{git-prompt.zsh,examples/wprompt.zsh}&quot;</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;junegunn/fzf&quot;</span>, use:<span class="st">&quot;shell/*.zsh&quot;</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;junegunn/fzf-bin&quot;</span>, from:gh-r, as:command, rename-to:fzf, use:<span class="st">&quot;*linux*amd64*&quot;</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;sharkdp/fd&quot;</span>, from:gh-r, as:command, rename-to:fd, use:<span class="st">&quot;*x86_64-unknown-linux-gnu.tar.gz&quot;</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-completions&quot;</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-autosuggestions&quot;</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-syntax-highlighting&quot;</span>, defer:2</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> <span class="st">&quot;zsh-users/zsh-history-substring-search&quot;</span>, defer:3</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="ex">zplug</span> load</span></code></pre></div>
+<p>The configuration above installs following plugins. Browse through their READMEs to learn what they do!</p>
+<ul>
+<li><a href="https://github.com/woefe/wbase.zsh">woefe/wbase.zsh</a></li>
+<li><a href="https://github.com/woefe/git-prompt.zsh">woefe/git-prompt.zsh</a></li>
+<li><a href="https://github.com/zsh-users/zsh-completions">zsh-users/zsh-completions</a></li>
+<li><a href="https://github.com/zsh-users/zsh-autosuggestions">zsh-users/zsh-autosuggestions</a></li>
+<li><a href="https://github.com/zsh-users/zsh-syntax-highlighting">zsh-users/zsh-syntax-highlighting</a></li>
+<li><a href="https://github.com/zsh-users/zsh-history-substring-search">zsh-users/zsh-history-substring-search</a></li>
+</ul>
+<p>The most notable feature of the <code>.zshrc</code> from above are not the plugins, but the commands that get installed.
+It installs the <a href="https://github.com/junegunn/fzf">fzf</a> and <a href="https://github.com/sharkdp/fd">fd</a> commands and integrates them in your shell.
+The fzf integration makes the <code>&lt;ctrl+r&gt;</code> hotkey fancier and installs two new hotkeys.
+The <code>&lt;alt+c&gt;</code> hotkey starts a fuzzy-find <code>cd</code> command, and the <code>&lt;ctrl+t&gt;</code> hotkey finds a file and inserts its path into the current command line.
+Try, for example, typing <code>nano &lt;ctrl+t&gt;</code> in the current command line. A window will pop up. Then search for a file and press enter.</p>
+<p>The command integration will only work on 64bit x86 CPUs (all modern AMD and Intel CPUs).
+If your CPU has a different architecture, for example ARM on a Raspberry Pi, you need to adjust the <code>use:</code> parameter of all <code>zplug .. as:command ..</code> lines.</p>
+<h1 id="without-zplug">Without zplug</h1>
+<p>Unfortunately, zplug adds noticeable delay to the startup of your shell (roughly 100ms on a modern laptop with SSD).
+Nevertheless, zplug and especially its command integration of binaries from GitHub provides enough value to justify it in most cases.
+If you are not happy with the performance and think of switching to another plugin manager, don’t!
+Either use zplug or no plugin manager at all.
+I think no other plugin manager provides enough benefits over installing and sourcing plugins manually.
+You can see how you would manage your plugins manually (with Git submodules) in my <a href="https://github.com/woefe/dotfiles/blob/master/zsh/.zshrc">dotfiles</a>.</p>]]></summary>
+</entry>
+<entry>
+    <title>Speeding up Scapy</title>
+    <link href="https://blog.woefe.com/posts/faster_scapy.html" />
+    <id>https://blog.woefe.com/posts/faster_scapy.html</id>
+    <published>2019-03-22T00:00:00Z</published>
+    <updated>2019-03-22T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>A few weeks ago I revisited the DNS cache poisoning attack discovered by Dan Kaminsky in 2008.
+Implementing the attack requires some fairly low-level manipulation of DNS packets.
+Fortunately, we have <a href="https://scapy.net/">Scapy</a>, which makes packet manipulation easy and accessible from Python.
+But at first the performance of my script was so bad that I could not carry out the attack (maybe I just never waited long enough).
+In this post I want to record my journey that led to a faster and faster Scapy script.</p>
+<!--more-->
+<p>A deep understanding of the Kaminsky attack won’t be necessary for this blog post.
+Nevertheless, if you want to learn more about the attack, I can recommend the paper from <a href="http://unixwiz.net/techtips/iguide-kaminsky-dns-vuln.html">unixwiz.net</a>, which helped me a lot in understanding the issue.
+For this post you only have to understand the following detail of the attack: we want to send a lot of spoofed DNS responses with varying DNS IDs.
+The more packets we send per second the higher our chance to succeed.</p>
+<h1 id="first-attempt">First attempt</h1>
+<p>Below you can find a simplified excerpt from my initial attack script.
+Packets are composed by gluing together the different layers with the <code>/</code> operator.
+For example, the DNS response over UDP follows the <code>IP()/UDP()/DNS()</code> structure.
+For now, you can safely ignore the parameters like source, destination or the particular DNS answer record.
+What is actually important is the for-loop, which sends 5000 packets using Scapy’s <code>send()</code> function.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scapy.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>n_packets <span class="op">=</span> <span class="dv">5000</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>start_time <span class="op">=</span> time.time()</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_packets):</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    response <span class="op">=</span> (</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        IP(dst<span class="op">=</span><span class="st">&quot;192.168.178.1&quot;</span>, src<span class="op">=</span><span class="st">&quot;192.168.178.2&quot;</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="op">/</span> UDP(sport<span class="op">=</span><span class="dv">53</span>, dport<span class="op">=</span><span class="dv">4444</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">/</span> DNS(</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="bu">id</span><span class="op">=</span>(<span class="dv">1024</span> <span class="op">+</span> i) <span class="op">%</span> <span class="dv">65535</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            an<span class="op">=</span>DNSRR(rrname<span class="op">=</span><span class="st">&quot;dummy.example.kom&quot;</span>, ttl<span class="op">=</span><span class="dv">70000</span>, rdata<span class="op">=</span><span class="st">&quot;192.168.178.3&quot;</span>),</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    send(response)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>end_time <span class="op">=</span> time.time()</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;sent </span><span class="sc">{</span>n_packets<span class="sc">}</span><span class="ss"> responses in </span><span class="sc">{</span>end_time <span class="op">-</span> start_time<span class="sc">:.3f}</span><span class="ss"> seconds&quot;</span>)</span></code></pre></div>
+<p>This script is quite slow.
+It took over four minutes to send the 5000 packets.</p>
+<pre><code>&gt; sudo python3 01_naive.py
+...
+sent 5000 responses in 265.825 seconds</code></pre>
+<p>To find the bottleneck that is wrecking performance I profiled the script with the <code>cProfile</code> module.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that the amount of packets was reduced to 100!</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> python <span class="at">-m</span> cProfile <span class="at">-s</span> time 01_naive.py</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">...</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">ncalls</span>  tottime  percall  cumtime  percall filename:lineno<span class="er">(</span><span class="kw">function)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>   <span class="ex">404</span>    2.502    0.006    2.502    0.006 {function socket.close at 0x7ff8449c19d8}</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>   <span class="ex">201</span>    2.352    0.012    2.352    0.012 {method <span class="st">&#39;bind&#39;</span> of <span class="st">&#39;_socket.socket&#39;</span> objects}</span></code></pre></div>
+<p>Most of the time is spent opening and closing sockets.
+It turns out <code>send()</code> opens a new socket for every single packet.</p>
+<h1 id="second-attempt-using-a-socket">Second attempt: using a socket</h1>
+<p>To fix the performance problems discovered above, we must tell Scapy to use the same socket for all responses.
+Scapy supports two kinds of sockets.
+One at OSI Layer 2, the <code>L2Socket</code>, which accepts <code>Ether()/...</code> or <code>bytes</code> objects and the other at Layer 3, named <code>L3Socket</code>, which accepts <code>IP()/...</code> objects.
+The patch is quite simple: create an <code>L3socket</code> and replace <code>send()</code> with <code>L3Socket.send()</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">4a5</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">&gt; s = conf.L3socket()</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="dt">16c17</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="st">&lt;     send(response)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">---</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">&gt;     s.send(response)</span></span></code></pre></div>
+<p>When we execute the script, we can see that the performance increased by a factor of roughly 56.</p>
+<pre><code>&gt; sudo python3 02_with_socket.py
+sent 5000 responses in 4.743 seconds</code></pre>
+<p>We can further improve the script by roughly 1.5 seconds by preparing the response beforehand and only adjusting the ID within the loop:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scapy.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>n_packets <span class="op">=</span> <span class="dv">5000</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> (</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    IP(dst<span class="op">=</span><span class="st">&quot;192.168.178.1&quot;</span>, src<span class="op">=</span><span class="st">&quot;192.168.178.2&quot;</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> UDP(sport<span class="op">=</span><span class="dv">53</span>, dport<span class="op">=</span><span class="dv">4444</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> DNS(<span class="bu">id</span><span class="op">=</span><span class="dv">0</span>, an<span class="op">=</span>DNSRR(rrname<span class="op">=</span><span class="st">&quot;dummy.example.kom&quot;</span>, ttl<span class="op">=</span><span class="dv">70000</span>, rdata<span class="op">=</span><span class="st">&quot;192.168.178.3&quot;</span>))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>dns_layer <span class="op">=</span> response[DNS]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> conf.L3socket()</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>start_time <span class="op">=</span> time.time()</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_packets):</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    dns_layer.<span class="bu">id</span> <span class="op">=</span> (<span class="dv">1024</span> <span class="op">+</span> i) <span class="op">%</span> <span class="dv">65535</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    s.send(response)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>end_time <span class="op">=</span> time.time()</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;sent </span><span class="sc">{</span>n_packets<span class="sc">}</span><span class="ss"> responses in </span><span class="sc">{</span>end_time <span class="op">-</span> start_time<span class="sc">:.3f}</span><span class="ss"> seconds&quot;</span>)</span></code></pre></div>
+<h1 id="third-attempt-pre-render-response">Third attempt: pre-render response</h1>
+<p>The patch from above yielded in noticeably better performance, but can we do better?
+After another round of profiling the answer is: yes, but we have to fiddle with our responses on byte-level.
+It turns out that most of the time is spent encoding the Scapy objects to byte arrays which are suitable to transmit over the wire.
+Every time we send a packet, Scapy implicitly calls the <code>raw()</code> function to encode the object representing our DNS response to bytes.
+If we could do this only once before the loop, we would win even more performance.
+Recall that we have to adjust the DNS ID on every single packet.
+Therefore, preparing a static response using the <code>raw()</code> method will not be sufficient.
+My solution is to prepare the response before entering the loop and then to manually adjust the DNS ID and UDP checksum within the encoded byte array.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scapy.<span class="bu">all</span> <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> patch(dns_frame: <span class="bu">bytearray</span>, pseudo_hdr: <span class="bu">bytes</span>, dns_id: <span class="bu">int</span>):</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Adjust the DNS id and patch the UDP checksum within the given Ethernet frame&quot;&quot;&quot;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># set dns id</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the byte offsets can be found in Wireshark</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">42</span>] <span class="op">=</span> (dns_id <span class="op">&gt;&gt;</span> <span class="dv">8</span>) <span class="op">&amp;</span> <span class="bn">0xFF</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">43</span>] <span class="op">=</span> dns_id <span class="op">&amp;</span> <span class="bn">0xFF</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># reset checksum</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">40</span>] <span class="op">=</span> <span class="bn">0x00</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">41</span>] <span class="op">=</span> <span class="bn">0x00</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># calc new checksum</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    ck <span class="op">=</span> checksum(pseudo_hdr <span class="op">+</span> dns_frame[<span class="dv">34</span>:])</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ck <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        ck <span class="op">=</span> <span class="bn">0xFFFF</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    cs <span class="op">=</span> struct.pack(<span class="st">&quot;!H&quot;</span>, ck)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">40</span>] <span class="op">=</span> cs[<span class="dv">0</span>]</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    dns_frame[<span class="dv">41</span>] <span class="op">=</span> cs[<span class="dv">1</span>]</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>n_packets <span class="op">=</span> <span class="dv">5000</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>response <span class="op">=</span> (</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    Ether()</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> IP(dst<span class="op">=</span><span class="st">&quot;192.168.178.1&quot;</span>, src<span class="op">=</span><span class="st">&quot;192.168.178.2&quot;</span>)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> UDP(sport<span class="op">=</span><span class="dv">53</span>, dport<span class="op">=</span><span class="dv">4444</span>)</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">/</span> DNS(<span class="bu">id</span><span class="op">=</span><span class="dv">0</span>, an<span class="op">=</span>DNSRR(rrname<span class="op">=</span><span class="st">&quot;dummy.example.kom&quot;</span>, ttl<span class="op">=</span><span class="dv">70000</span>, rdata<span class="op">=</span><span class="st">&quot;192.168.178.3&quot;</span>))</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>dns_frame <span class="op">=</span> <span class="bu">bytearray</span>(raw(response))</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>pseudo_hdr <span class="op">=</span> struct.pack(</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;!4s4sHH&quot;</span>,</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    inet_pton(socket.AF_INET, response[<span class="st">&quot;IP&quot;</span>].src),</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    inet_pton(socket.AF_INET, response[<span class="st">&quot;IP&quot;</span>].dst),</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    socket.IPPROTO_UDP,</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    <span class="bu">len</span>(dns_frame[<span class="dv">34</span>:]),</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> conf.L2socket()</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>start_time <span class="op">=</span> time.time()</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_packets):</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>    patch(dns_frame, pseudo_hdr, (<span class="dv">1024</span> <span class="op">+</span> i) <span class="op">%</span> <span class="dv">65535</span>)</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>    s.send(dns_frame)</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>end_time <span class="op">=</span> time.time()</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;sent </span><span class="sc">{</span>n_packets<span class="sc">}</span><span class="ss"> responses in </span><span class="sc">{</span>end_time <span class="op">-</span> start_time<span class="sc">:.3f}</span><span class="ss"> seconds&quot;</span>)</span></code></pre></div>
+<p>The performance critical part of the script is now 2000-3000 times faster than the initial version!</p>
+<pre><code>&gt; sudo python3 03_without_raw.py
+sent 5000 responses in 0.096 seconds</code></pre>]]></summary>
+</entry>
+<entry>
+    <title>Control brightness of external monitors on Linux</title>
+    <link href="https://blog.woefe.com/posts/ddc_screen_brightness.html" />
+    <id>https://blog.woefe.com/posts/ddc_screen_brightness.html</id>
+    <published>2018-10-09T00:00:00Z</published>
+    <updated>2018-10-09T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>Until now I only knew the convenient feature from my laptop, where I can simply press a hotkey to adjust the brightness of the built in screen.
+But what about external monitors?
+Can I adjust the brightness without fiddling with the on-screen menu?</p>
+<!--more-->
+<p>Turns out I can, and the secret sauce I need is called <a href="https://en.wikipedia.org/wiki/Display_Data_Channel">Display Data Channel (DDC)</a>.</p>
+<h1 id="the-hardware">The hardware</h1>
+<p>Whether DDC works properly depends on many different variables like the monitor, display connection, GPU,…
+Here is the list of hardware that worked for me:</p>
+<ol type="1">
+<li>Desktop:
+<ul>
+<li>GPU: Nvidia GTX 1070 (with proprietary driver)</li>
+<li>Monitor 1: Dell U2715H</li>
+<li>Monitor 2: Dell U2414H</li>
+<li>Both monitors are connected via DisplayPort (HDMI did not work)</li>
+</ul></li>
+<li>Laptop:
+<ul>
+<li>Dell XPS 13 9370</li>
+<li>Anker USB-C to HDMI Adapter (Model A8306)</li>
+<li>No-name USB-C hub with HDMI (couldn’t find a modelnumber; Uses a VIA chip according to <code>dmesg</code>)</li>
+<li>Monitor 1: Dell U2715H</li>
+<li>Monitor 2: Dell U2414H</li>
+<li>All monitors connected via HDMI</li>
+</ul></li>
+</ol>
+<p>Of course, DDC has to be enabled in the on-screen menu of the monitor (“Others” -&gt; “DDC/CI” on my Dells).</p>
+<h1 id="the-software">The software</h1>
+<p>The tool you need is <a href="https://www.ddcutil.com/">ddcutil</a>.
+It is available in the Ubuntu repositories and on Arch Linux via the AUR.
+On Arch Linux I had to make a few adjustments to get it working:</p>
+<ol type="1">
+<li>Load the <code>i2c-dev</code> kernel module with <code>modprobe i2c-dev</code>.
+To make this change persistent across reboots:
+<code>echo i2c_dev &gt;&gt; /etc/modules-load.d/ddc.conf</code></li>
+<li>Create group <code>i2c</code>:
+<code>groupadd i2c</code></li>
+<li>Create udev rules to allow group <code>i2c</code> read and write access to <code>/dev/i2c-*</code>:
+<code>cp /usr/share/ddcutil/data/45-ddcutil-i2c.rules /etc/udev/rules.d/</code></li>
+<li>Add your user to the <code>i2c</code> group:
+<code>usermod $USER -aG i2c</code></li>
+</ol>
+<p>After a reboot <code>ddcutil detect</code> should detect the monitors. If it does not, check the <a href="https://www.ddcutil.com/config/">documentation</a>.
+Some devices need special tweaking, e.g. the <a href="https://www.ddcutil.com/raspberry/">Raspberry Pi</a>.
+One more tip: The output of <code>ddcutil environment</code> suggests that it is not necessary to load <code>i2c-dev</code> when using proprietary Nvidia drivers.
+However, without <code>i2c-dev</code> (and with <a href="ddcutil%20environment">special Nvidia driver settings</a>) ddcutil could not detect any monitors.</p>
+<h1 id="examples">Examples</h1>
+<p>Settings like color corrections, orientation of the on-screen menu and the input source can be adjusted through DDC.
+<code>ddcutil capabilities</code> shows a list of supported options.
+The following examples adjust and read the brightness of the monitor:</p>
+<ul>
+<li>Get the brightness of the first display: <code>ddcutil getvcp 10 --display 1</code></li>
+<li>Set the brightness of the second display to 100%: <code>ddcutil setvcp 10 100 --display 2</code></li>
+<li>Decrease the brightness of the second display by 5%: <code>ddcutil setvcp 10 - 5 --display 2</code></li>
+<li>Increase the brightness of the first display by 5%: <code>ddcutil setvcp 10 + 5 --display 1</code></li>
+</ul>
+<p>I mapped <a href="https://github.com/woefe/dotfiles/blob/a8882e631eb84992d93610168bf4ec3d3f005556/i3/.config/i3/config#L178">these</a> commands to some hotkeys in my i3 config.</p>]]></summary>
+</entry>
+<entry>
+    <title>Install Termite's terminfo</title>
+    <link href="https://blog.woefe.com/posts/termite.html" />
+    <id>https://blog.woefe.com/posts/termite.html</id>
+    <published>2017-11-04T00:00:00Z</published>
+    <updated>2017-11-04T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>On many systems Termite’s terminfo is not available by default. That’s a problem since you cannot start ncurses apps,
+when the terminfo is missing. I usually run into this problem when I try to ssh into a newly installed machine. Here is
+a one-liner to fix the issue (you have to run this command on the remote, not you local machine!).</p>
+<!--more-->
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo <span class="kw">|</span> <span class="fu">sudo</span> tic <span class="at">-x</span> <span class="at">-</span></span></code></pre></div>
+<p>The command above adds a terminfo entry to the system-wide database. If you don’t have root access on the remote
+machine, simply remove the <code>sudo</code> from the command, which will make the terminfo available only to the current user.</p>]]></summary>
+</entry>
+<entry>
+    <title>Convert legacy Rofi themes</title>
+    <link href="https://blog.woefe.com/posts/rofi_themes.html" />
+    <id>https://blog.woefe.com/posts/rofi_themes.html</id>
+    <published>2017-10-24T00:00:00Z</published>
+    <updated>2017-10-24T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p><a href="https://github.com/DaveDavenport/rofi">Rofi</a> is a window switcher, application launcher and dmenu replacement, which
+integrates nicely with tiling window managers. In versions 1.3.x and before themes were read from <a href="https://wiki.archlinux.org/index.php/X_resources">X
+resources</a>. The recent upgrade to version 1.4.2 broke my custom
+<a href="https://github.com/horst3180/Arc-theme">Arc-Dark</a> inspired theme. Here is how to migrate legacy themes to the new
+format:</p>
+<pre class="shell"><code>rofi -config /path/to/old/themefile -dump-theme &gt; theme.rasi</code></pre>
+<!--more-->
+<p>In case you are interested in the Arc-Dark theme I am using, check my
+<a href="https://github.com/woefe/dotfiles/blob/master/rofi/.config/rofi/ArcDark.rasi">dotfiles</a>. Alternatively you might be
+able to get it from the <a href="https://github.com/DaveDavenport/rofi-themes">Rofi Themes Repo</a>, if they accept my pull
+request. The theme was first contributed to the theme repo by <a href="https://github.com/leofa">Faruk Ünver</a>, but got lost when
+the themes were restructured.</p>
+<p>It took me quite some time to figure out the command above, because at a first glance it seems like there is a different
+method to convert legacy themes. There is a
+<a href="https://github.com/DaveDavenport/rofi/blob/next/script/rofi-convert-theme.sh">script</a> that is supposed to convert
+legacy themes to the new format. However, this script generated a theme file, which could not be parsed by Rofi. After
+digging around some more in Rofi’s project files, I found the <code>convert_old_theme_test.sh</code> test script, which contains
+the command from above.</p>]]></summary>
+</entry>
+<entry>
+    <title>Don't forget to clean your pacman cache!</title>
+    <link href="https://blog.woefe.com/posts/pacman_cache.html" />
+    <id>https://blog.woefe.com/posts/pacman_cache.html</id>
+    <published>2017-03-26T00:00:00Z</published>
+    <updated>2017-03-26T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>Arch Linux’ package manager <strong>pacman</strong> stores all downloaded packages in <code>/var/cache/pacman/pkg</code>.
+This cache does not get cleaned automatically and pacman keeps adding new archives with every single system update.
+If you forget about the pacman cache for a couple of months it takes up more and more space.
+I recently freed over 12GB on my SSD by running the cleanup commands listed below.</p>
+<!--more-->
+<h1 id="cleanup">Cleanup</h1>
+<p>To see how much space the cleanup command would save you can use <code>paccache -dk2 &amp;&amp; paccache -duk0</code>.
+And to actually clean the pacman cache use following command:</p>
+<pre class="shell"><code>sudo paccache -vrk2 &amp;&amp; sudo paccache -vruk0</code></pre>
+<p>The first part of the command keeps the two latest versions of each package and removes the rest.
+The second part removes all versions of packages which are not installed anymore.
+Note that removing all packages from the cache is usually a bad idea, because in case an updated package has a bug you can still install an older version from the cache which does not suffer from the bug.</p>
+<h1 id="pacaur">Pacaur</h1>
+<p>Pacaur, currently my favourite AUR helper and pacman wrapper, maintains its own cache for AUR packages in
+<code>~/.cache/pacaur/</code>. This cache directory grows rapidly if you install huge packages that update often, e.g. the
+Jetbrains IDEs. The following command cleans the pacaur cache</p>
+<pre class="shell"><code>pacaur -Sac</code></pre>
+<h1 id="zsh-alias">Zsh alias</h1>
+<p>I have realized that cleaning the pacman and pacaur caches should be a (semi-)regular system maintenance task,
+especially on a 120GB SSD, where disk space is very limited. That’s why I added the <code>pacclean</code> alias to my zshrc:</p>
+<pre class="shell"><code>alias pacclean=&#39;sudo paccache -vrk2 &amp;&amp; sudo paccache -vruk0 &amp;&amp; pacaur -Sac --noconfirm&#39;</code></pre>
+<h1 id="update-2018">Update (2018)</h1>
+<p>I switched to pikaur, since pacaur has been deprecated for a while now.
+Pikaur maintains its own cache, which can be managed with the <code>paccache</code> command.
+Meanwhile I use a <a href="https://github.com/woefe/dotfiles/blob/master/scripts/.bin/pacclean">small script</a> to clean the cache and remove unused packages.</p>]]></summary>
+</entry>
+<entry>
+    <title>VPN with tinc</title>
+    <link href="https://blog.woefe.com/posts/tinc_vpn.html" />
+    <id>https://blog.woefe.com/posts/tinc_vpn.html</id>
+    <published>2016-09-14T00:00:00Z</published>
+    <updated>2016-09-14T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>I finally solved the problem that I could not access my home computer, when I am not at home. In many cases the easiest
+solution is to forward a port on the home router and run a SSH daemon on the home computer. However, it is not possible
+for me to forward ports to the public internet. I got around this issue by setting up a Virtual Private Network (VPN)
+using the <a href="https://tinc-vpn.org">tinc</a> VPN daemon. tinc is one of <a href="http://tinc-vpn.org/vpnlinks/">many</a> VPN solutions
+available on GNU/Linux. It is simple and easy to set up, especially when comparing it to OpenVPN, which has an enormous
+amount of features and configuration options.</p>
+<!--more-->
+<h1 id="the-setup">The setup</h1>
+<p>My VPN network consists of four different computers, which are all running Arch Linux: a Virtual Private Server (VPS)
+that has a static IP address and is accessible from the public Internet, a laptop, the home computer (Desktop) and in
+the same LAN a Raspberry Pi. I use the Raspberry Pi to wake up the home computer via Wake on LAN (WoL). This allows me
+to shutdown the home computer when I leave my home and to start it only when I actually need it. On initial connection,
+the Laptop, Desktop and Raspberry connect to the VPS. But due to tinc’s <strong>automatic full mesh routing</strong> feature the
+traffic is later sent directly to the destination computer, which usually leads to better and faster connections between
+the computers in the VPN.</p>
+<p><img src="/images/tinc_vpn_setup.svg" alt="Drawing" style="width: 60%;"/></p>
+<h1 id="configuring-tinc">Configuring tinc</h1>
+<p>The following steps will quide you through the configuration process for setting up a tinc VPN called <strong>thevpn</strong> that
+uses the 10.42.42.0/24 subnet. If you want to choose a different name, replace all occurrences of <strong>thevpn</strong> with
+the name you like. Also replace the angle brackets and the text within them with the values shown in the following
+table.</p>
+<!-- TODO: two step configuration -->
+<table>
+<thead>
+<tr class="header">
+<th>host</th>
+<th>hostname</th>
+<th>ip</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>VPS</td>
+<td>vps</td>
+<td>10.42.42.1</td>
+</tr>
+<tr class="even">
+<td>Laptop</td>
+<td>laptop</td>
+<td>10.42.42.2</td>
+</tr>
+<tr class="odd">
+<td>Desktop</td>
+<td>desktop</td>
+<td>10.42.42.3</td>
+</tr>
+<tr class="even">
+<td>Raspberry Pi</td>
+<td>raspberry</td>
+<td>10.42.42.4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="per-host-configuration">Per host configuration</h2>
+<p>Install the tinc daemon</p>
+<pre><code>pacman -S tinc</code></pre>
+<p>Create the configuration directory structure</p>
+<pre><code>mkdir -p /etc/tinc/thevpn/hosts</code></pre>
+<p>Edit <code>/etc/tinc/thevpn/tinc.conf</code>. On VPS the config looks like this:</p>
+<pre><code>Name = vps
+Device = /dev/net/tun</code></pre>
+<p>on all other three computers the config looks like this:</p>
+<pre><code>Name = &lt;hostname&gt;
+Device = /dev/net/tun
+ConnectTo = vps</code></pre>
+<p>Edit the start script <code>/etc/tinc/thevpn/tinc-up</code></p>
+<pre class="shell"><code>#!/bin/sh
+ip link set $INTERFACE up
+ip addr add  &lt;ip&gt;/32 dev $INTERFACE
+ip route add 10.42.42.0/24 dev $INTERFACE</code></pre>
+<p>Edit the stop script <code>/etc/tinc/thevpn/tinc-down</code></p>
+<pre class="shell"><code>#!/bin/sh
+ip route del 10.42.42.0/24 dev $INTERFACE
+ip addr del &lt;ip&gt;/32 dev $INTERFACE
+ip link set $INTERFACE down</code></pre>
+<p>Make the scripts executable</p>
+<pre><code>chmod +x /etc/tinc/thevpn/tinc-up
+chmod +x /etc/tinc/thevpn/tinc-down</code></pre>
+<p>Create the host file <code>/etc/tinc/thevpn/hosts/&lt;hostname&gt;</code>. On VPS the config looks like this:</p>
+<pre><code>Address = &lt;static ip of vps&gt;
+Port = 655
+Subnet = 10.42.42.1/32</code></pre>
+<p>on all other three computers the config looks like this:</p>
+<pre><code>Port = 655
+Subnet = &lt;ip&gt;/32</code></pre>
+<p>Create a keypair (keep the default values, when this command asks you where to save the keys)</p>
+<pre><code>tincd -n thevpn -K 4096</code></pre>
+<p>Repeat all these steps on all four machines.</p>
+<h2 id="synchronize-host-files-and-start-tincd">Synchronize host files and start tincd</h2>
+<p>Before starting the tinc daemon, the host configuration files have to be synchronized across all four computers. The
+<code>/etc/tinc/thevpn/hosts</code> directory on every host should contain four host configuration files, that are identical across
+the four hosts. After the host configuration files are copied to all machines, the tinc daemon can be started, first on
+VPS and then on all other computers in the VPN Network. The tinc daemon can be enabled and started via systemd:</p>
+<pre><code>systemctl enable tinc@thevpn.service
+systemctl start tinc@thevpn.service</code></pre>
+<p>I recommend, you first start the tinc daemon manually before starting it via systemd to ensure that everything is set up
+correctly. The troubleshooting section describes how to start tinc manually.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p>A few hints that might help fixing issues you encounter:</p>
+<ul>
+<li>Use <code>tincd -n thevpn -d3 -D</code> to start tinc manually with debugging output and look up the errors
+<a href="https://www.tinc-vpn.org/documentation/Error-messages.html">here</a>. Note that by pressing Ctrl+C the debug level is
+increased to 5, i.e. you cannot kill tincd by pressing Ctrl+C. Use Ctrl+Z and <code>kill %1</code> instead.</li>
+<li>Check that the correct IP addresses and subnet masks are used, especially the <code>/32</code> masks</li>
+<li>Chapter 5 of the tinc <a href="https://www.tinc-vpn.org/documentation/tinc.pdf">manual</a></li>
+</ul>
+<h1 id="wake-on-lan">Wake On Lan</h1>
+<p>Picture following scenario: You are travelling and working on your laptop. You want to access files on your home
+desktop, but it is shut down. Luckily, the Raspberry Pi is running. You can establish a ssh connection to the Raspberry
+and start the desktop computer from the Raspberry via WoL. You can use the following script to remotely start and stop
+the desktop computer. The shell script takes one argument (<code>start</code> or <code>stop</code>).</p>
+<pre class="shell"><code>#!/bin/sh
+if [ &quot;$1&quot; == &quot;start&quot; ]; then
+    ssh 10.42.42.4 &quot;wol -h desktop &lt;desktop_mac_address&gt;&quot;
+elif [ &quot;$1&quot; == &quot;stop&quot; ]; then
+    ssh 10.42.42.3 -t &quot;sudo /usr/bin/systemctl poweroff&quot;
+fi</code></pre>]]></summary>
+</entry>
+<entry>
+    <title>Bookmarks with ownCloud and Vimperator</title>
+    <link href="https://blog.woefe.com/posts/owncloud_bookmarks.html" />
+    <id>https://blog.woefe.com/posts/owncloud_bookmarks.html</id>
+    <published>2016-05-23T00:00:00Z</published>
+    <updated>2016-05-23T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>I recently added the Bookmarks app to my ownCloud installation. This app keeps a simple list of bookmarks synced across
+my computers. The Bookmarks app provides a <a href="https://en.wikipedia.org/wiki/Bookmarklet">bookmarklet</a> to add new bookmarks
+easily. But there is a problem with using the bookmarklet: I have to click on it! And therefore I have to display the
+bookmarks bar or search for the bookmarklet in the bookmarks menu. I don’t like both approaches for following reasons:
+The bookmark bar eats too much space on my small notebook screen and searching for the bookmarklet in the menu takes too
+long.</p>
+<!--more-->
+<p>The solution to this problem involves the Firefox plugin “Vimperator”, another great piece of software. Vimperator
+rearranges or removes some UI components of Firefox, like the address bar and makes your Browser behave like the
+<a href="http://www.vim.org">Vim</a> text editor. In Vimperator one can execute JavaScript code with the <code>:js</code> command. This makes
+it possible to execute the JavaScript of the bookmarklet directly in Vimperator. So let’s define a function that adds
+a new bookmark to the Bookmarks app and map this function to a keypress in Vimperator.</p>
+<p>This snippet of my <code>.vimperatorrc</code> creates a new key binding (<strong>A</strong> in normal mode), which overrides Vimperator’s
+default key binding for adding a new bookmark.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>noremap A <span class="op">:</span>js <span class="fu">bmark_owncloud</span>()<span class="op">&lt;</span>CR<span class="op">&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">:</span>js <span class="op">&lt;&lt;</span> EOF</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">bmark_owncloud</span>(){</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> bmark_title <span class="op">=</span> <span class="pp">encodeURIComponent</span>(content<span class="op">.</span><span class="at">document</span><span class="op">.</span><span class="at">title</span>)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> bmark_url <span class="op">=</span> <span class="pp">encodeURIComponent</span>(content<span class="op">.</span><span class="at">document</span><span class="op">.</span><span class="at">location</span>)<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> window_features <span class="op">=</span> <span class="st">&#39;left=&#39;</span> <span class="op">+</span> ((<span class="bu">window</span><span class="op">.</span><span class="at">screenX</span><span class="op">||</span><span class="bu">window</span><span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">left</span>) <span class="op">+</span> <span class="dv">10</span>) <span class="op">+</span> <span class="st">&#39;,top=&#39;</span> <span class="op">+</span> ((<span class="bu">window</span><span class="op">.</span><span class="at">screenY</span><span class="op">||</span><span class="bu">window</span><span class="op">.</span><span class="at">screen</span><span class="op">.</span><span class="at">top</span>) <span class="op">+</span> <span class="dv">10</span>) <span class="op">+</span> <span class="st">&#39;,height=500px,width=550px,resizable=1,alwaysRaised=1&#39;</span><span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> window_name <span class="op">=</span> <span class="st">&#39;bkmk_popup&#39;</span><span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> owncloud_url <span class="op">=</span> <span class="st">&#39;https://owncloud.example.com/index.php/apps/bookmarks/bookmarklet?output=popup&amp;url=&#39;</span> <span class="op">+</span> bmark_url <span class="op">+</span> <span class="st">&#39;&amp;title=&#39;</span> <span class="op">+</span> bmark_title<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> new_window <span class="op">=</span> <span class="bu">window</span><span class="op">.</span><span class="fu">open</span>(owncloud_url<span class="op">,</span> window_name<span class="op">,</span> window_features)<span class="op">;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">window</span><span class="op">.</span><span class="fu">setTimeout</span>(</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="kw">function</span>(){</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            new_window<span class="op">.</span><span class="fu">focus</span>()</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        }<span class="op">,</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        <span class="dv">300</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>EOF</span></code></pre></div>
+<p>Now the only thing that is left to do, is to change the <code>https://owncloud.example.com</code> to your actual ownCloud
+installation and you are good to go!</p>]]></summary>
+</entry>
+<entry>
+    <title>Under Construction</title>
+    <link href="https://blog.woefe.com/posts/under_construction.html" />
+    <id>https://blog.woefe.com/posts/under_construction.html</id>
+    <published>2016-05-22T00:00:00Z</published>
+    <updated>2016-05-22T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>Hi there, you found my blog 😀 . It is still under heavy construction. See you soon!</p>]]></summary>
+</entry>
+
+</feed>
